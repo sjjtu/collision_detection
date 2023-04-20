@@ -2,7 +2,7 @@ clear
 close all
 clc
 
-load("out.csv")
+load("out.txt")
 
 [Ntime, Nballs2] = size(out);
 Nballs = Nballs2 / 2;

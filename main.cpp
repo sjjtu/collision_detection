@@ -1,5 +1,6 @@
 #include <stdio.h>
 #include "ball.h"
+#include "Detector.h"
 
 const int T = 30;
 const int FPS = 25;
@@ -40,5 +41,7 @@ int main() {
     }
 
     write_to_file(coordinates);
+
+
     
 }
