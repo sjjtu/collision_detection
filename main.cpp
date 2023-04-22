@@ -2,7 +2,7 @@
 #include "ball.h"
 #include "Detector.h"
 
-const int T = 30;
+const double T = 10;
 const int FPS = 25;
 const double dt = 1.0/FPS;
 const int Ntime = T*FPS;
@@ -10,7 +10,6 @@ const int Nballs = 2;
 
 void write_to_file(double content[Ntime][Nballs][2]){
     FILE *fp;
-    /* your computations */
     fp = fopen("out.txt","w");
     for (int n = 0; n < Ntime; n++) {
         for (int i = 0; i < Nballs; i++) {
@@ -31,14 +30,21 @@ int main() {
                     Ball(1,1, 0, 0, 1, 2), 
                     Ball(1,1, 10, 0, -1, 2)
                     };
-    
+    Detector det(ball, Nballs);
+
     for(int n=0;n<Ntime;n++){ // loop through time
+        
+        det.sweep_and_prune();
+        det.update_velocity(n);
+        
         for (int i = 0; i < Nballs; i++){
+            
             coordinates[n][i][0] = ball[i].position_x;
             coordinates[n][i][1] = ball[i].position_y;
             ball[i].update(dt); 
         }
     }
+
 
     write_to_file(coordinates);
 

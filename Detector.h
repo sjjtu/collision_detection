@@ -1,18 +1,26 @@
-#include<list>
 #include<unordered_map>
+#include "ball.h"
+#include <vector>
 using namespace std;
 
 class Detector{
     public:
-        list<Ball> status_list;
-        list<Ball> collision_candidates; // storing the result of S&P
-        unordered_map<double, Ball> map_x_coord; // key: x_coordinate, value: Ball 
-        unordered_map<double, Ball> map_y_coord; // key: y_coordinate, value: Ball 
-        Detector(Ball* ball, int nBalls);
+        Ball *ball;
+        int nBalls;
+        vector<int> status_list_x; // list of active ball for x axis
+        vector<int> status_list_y; // list of active ball for y axis
+
+        vector<int> x_coord;
+        vector<int> y_coord;
+
+        vector<int> collision_candidates; // storing the result of S&P
+        vector<vector<int>> counter_table;
+
+        Detector(Ball *ball, int nBalls);
     
-    private:
+    public:
         void sweep_and_prune();
-        void update_velocity();
+        void update_velocity(int time_step);
         void sort_axis();
 
 };
