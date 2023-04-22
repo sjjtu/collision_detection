@@ -100,9 +100,9 @@ void Detector::update_velocity(int time_step) {
                 double v1y_new = (py_before - ball[j].mass*v_rel_y)/total_mass;
                 double v2x_new = (px_before + ball[i].mass*v_rel_x)/total_mass;
                 double v2y_new = (py_before + ball[i].mass*v_rel_y)/total_mass;
-                double ke_after = 0.5 * m1 * (v1x_new * v1x_new + v1y_new * v1y_new) + 0.5 * m2 * (v2x_new * v2x_new + v2y_new * v2y_new);
-
-              
+                double m1 = ball[i].mass;
+                double m2 = ball[j].mass;
+                double ke_after = 0.5*m1*(v1x_new*v1x_new + v1y_new*v1y_new) + 0.5*m2*(v2x_new*v2x_new + v2y_new*v2y_new);
                 ball[i].velocity_x = v1x_new;
                 ball[i].velocity_y = v1y_new;
                 ball[j].velocity_x = v2x_new;
