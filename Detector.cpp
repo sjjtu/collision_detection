@@ -89,10 +89,24 @@ void Detector::update_velocity(int time_step) {
         for(int j=0;j<nBalls;j++){
             if (counter_table[i][j] == 2){
                 printf("collision detected between %d and %d in time step %d \n", i, j, time_step);
-                ball[i].velocity_x = 0;
-                ball[i].velocity_y = 0;
-                ball[j].velocity_x = 0;
-                ball[j].velocity_y = 0;
+                // Compute the total x and y momenta before the collision
+                double px_before = ball[i].mass*ball[i].velocity_x+ball[j].mass*ball[j].velocity_x;
+                double py_before = ball[i].mass*ball[i].velocity_y+ball[j].mass*ball[j].velocity_y;
+                double ke_before = 0.5*ball[i].mass*(ball[i].velocity_x*ball[i].velocity_x+ball[i].velocity_y*ball[i].velocity_y) + 0.5*ball[j].mass*(ball[j].velocity_x*ball[j].velocity_x+ball[j].velocity_y*ball[j].velocity_y); //Kinetic energy before the collision
+                double v_rel_x = ball[i].velocity_x-ball[j].velocity_x;
+                double v_rel_y = ball[j].velocity_y-ball[j].velocity_y;
+                double total_mass = ball[i].mass+ball[j].mass;
+                double v1x_new = (px_before - ball[j].mass*v_rel_x)/total_mass;
+                double v1y_new = (py_before - ball[j].mass*v_rel_y)/total_mass;
+                double v2x_new = (px_before + ball[i].mass*v_rel_x)/total_mass;
+                double v2y_new = (py_before + ball[i].mass*v_rel_y)/total_mass;
+                double ke_after = 0.5 * m1 * (v1x_new * v1x_new + v1y_new * v1y_new) + 0.5 * m2 * (v2x_new * v2x_new + v2y_new * v2y_new);
+
+              
+                ball[i].velocity_x = v1x_new;
+                ball[i].velocity_y = v1y_new;
+                ball[j].velocity_x = v2x_new;
+                ball[j].velocity_y = v2y_new;
             }
         }
     }
