@@ -2,6 +2,7 @@
 #include <algorithm>
 #include <stdio.h>
 #include <iostream>
+#include <cmath>
 
 Detector::Detector(Ball *ball, int nBalls){
 
@@ -80,10 +81,16 @@ void Detector::sweep_and_prune() {
     }
 }
 
+bool Detector::detect_collision(int ball_i, int ball_j){
+    return pow(ball[ball_i].position_x-ball[ball_j].position_x, 2) 
+        + pow(ball[ball_i].position_y-ball[ball_j].position_y, 2) <= 
+                                                                            pow(ball[ball_i].radius + ball[ball_j].radius, 2); 
+}
+
 void Detector::update_velocity(int time_step) {
     for(int i=0;i<nBalls;i++) {
         for(int j=0;j<i;j++){ // only need lower half of matrix
-            if (counter_table[i][j] == 2){
+            if (counter_table[i][j] == 2 && detect_collision(i, j)){
                 printf("collision detected between %d and %d in time step %d \n", i, j, time_step);
                 // Compute the total x and y momenta before the collision
                 double px_before = ball[i].mass*ball[i].velocity_x+ball[j].mass*ball[j].velocity_x;

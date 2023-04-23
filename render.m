@@ -14,7 +14,7 @@ ymax = max(max(out(:,2:2:Nballs2)));
 ymin = min(min(out(:,2:2:Nballs2)));
 tic
 for n=1:Ntime
-    n
+     
     for i=1:Nballs
         %plot(out(n,2*i-1), out(n,2*i),"Marker","o");
         

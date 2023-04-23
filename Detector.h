@@ -20,6 +20,7 @@ class Detector{
     
     public:
         void sweep_and_prune();
+        bool detect_collision(int ball_i, int ball_j);
         void update_velocity(int time_step);
         void sort_axis();
 

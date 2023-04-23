@@ -7,7 +7,7 @@ const double T = 10;
 const int FPS = 25;
 const double dt = 1.0/FPS;
 const int Ntime = T*FPS;
-const int Nballs = 3;
+const int Nballs = 4;
 
 void write_to_file(double content[Ntime][Nballs][2]){
     FILE *fp;
@@ -31,7 +31,7 @@ int main() {
                     Ball(1,1, 0, 0, 2, 1), 
                     Ball(1,1, 0, 10, 2, -1),
                     Ball(1,1, 5, 0, -1, 2),
-                    //Ball(1,1, 5, 10, -1, -2),
+                    Ball(1,1, 5, 10, -1, -2),
                     };
     Detector det(ball, Nballs);
 
