@@ -91,7 +91,7 @@ void Detector::update_velocity(int time_step) {
     for(int i=0;i<nBalls;i++) {
         for(int j=0;j<i;j++){ // only need lower half of matrix
             if (counter_table[i][j] == 2 && detect_collision(i, j)){
-                printf("collision detected between %d and %d in time step %d \n", i, j, time_step);
+                //printf("collision detected between %d and %d in time step %d \n", i, j, time_step);
                 // Compute the total x and y momenta before the collision
                 double px_before = ball[i].mass*ball[i].velocity_x+ball[j].mass*ball[j].velocity_x;
                 double py_before = ball[i].mass*ball[i].velocity_y+ball[j].mass*ball[j].velocity_y;
@@ -114,3 +114,29 @@ void Detector::update_velocity(int time_step) {
         }
     }
 }
+
+void Detector::collision_with_boundary(int nballs, int time_step,double x_left,double x_right,double y_top,double y_bottom) {
+    double x_left_boundrary = x_left;
+    double x_right_boundrary = x_right;
+    double y_top_boundrary = y_top;
+    double y_bottom_boundrary = y_bottom;
+    double margin = 0.0001;
+    for (int i = 0; i< nballs; i++) {
+        if (abs(ball[i].position_x-x_left_boundrary) < margin+ball[i].radius){
+            //printf("collision detected between %d and boundary in time step %d \n", i, time_step);
+            ball[i].velocity_x = -ball[i].velocity_x;
+        };
+        if (abs(ball[i].position_x-x_right_boundrary) < margin+ball[i].radius){
+            //printf("collision detected between %d and boundary in time step %d \n", i, time_step);
+            ball[i].velocity_x = -ball[i].velocity_x;
+        };
+        if (abs(ball[i].position_y-y_top_boundrary) < margin+ball[i].radius){
+            //printf("collision detected between %d and boundary in time step %d \n", i, time_step);
+            ball[i].velocity_y = -ball[i].velocity_y;
+        };
+        if (abs(ball[i].position_y-y_bottom_boundrary) < margin+ball[i].radius){
+            //printf("collision detected between %d and boundary in time step %d \n", i, time_step);
+            ball[i].velocity_y = -ball[i].velocity_y;
+        };
+    }
+} 

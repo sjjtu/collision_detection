@@ -1,17 +1,22 @@
 clear
 close all
 clc
+figure("Visible","off")
+wb = waitbar(0, 'Starting');
 
 load("out.txt")
 
 [Ntime, Nballs2] = size(out);
 Nballs = Nballs2 / 2;
-figure()
-xmax = max(max(out(:,1:2:Nballs2)));
-xmin = min(min(out(:,1:2:Nballs2)));
 
-ymax = max(max(out(:,2:2:Nballs2)));
-ymin = min(min(out(:,2:2:Nballs2)));
+xmax = 100;
+xmin = 0;
+
+ymax = 100;
+ymin = 0;
+
+F(Ntime) = struct('cdata',[],'colormap',[]);
+
 tic
 for n=1:Ntime
      
@@ -25,12 +30,20 @@ for n=1:Ntime
         hold on
     end
     
-    pause(1/25);
+    waitbar(n/Ntime, wb, sprintf('Progress: %d %%', floor(n/Ntime*100)));
     children = get(gca, 'children');
+    F(n) = getframe(gca);
     delete(children);
 end
 toc
+close(wb)
 
+vw = VideoWriter("balls");
+vw.FrameRate = 25;
+vw.Quality = 50;
+open(vw);
+writeVideo(vw, F);
+close(vw);
 
 function h = circle(x,y,r)
     hold on
