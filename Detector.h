@@ -7,11 +7,11 @@ class Detector{
     public:
         Ball *ball;
         int nBalls;
-        vector<int> status_list_x; // list of active ball for x axis
-        vector<int> status_list_y; // list of active ball for y axis
+        vector<Ball*> status_list_x; // list of pointers to active ball for x axis
+        vector<Ball*> status_list_y; // list of active ball for y axis
 
-        vector<int> x_coord;
-        vector<int> y_coord;
+        vector<Ball*> x_coord;
+        vector<Ball*> y_coord;
 
         vector<int> collision_candidates; // storing the result of S&P
         vector<vector<int>> counter_table;

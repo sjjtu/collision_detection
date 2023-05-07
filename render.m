@@ -15,6 +15,8 @@ xmin = 0;
 ymax = 100;
 ymin = 0;
 
+Ntime=100;
+
 F(Ntime) = struct('cdata',[],'colormap',[]);
 
 tic

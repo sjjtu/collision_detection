@@ -5,6 +5,7 @@
 #include <iostream>
 #include <random>
 #include <algorithm>
+#include <mpi.h>
 
 const double T = 30;
 const int FPS = 25;
@@ -26,42 +27,61 @@ void write_to_file(double content[Ntime][Nballs][2]){
         }
         fprintf(fp, "\n");
     }
-
     fclose(fp);
 }
 
-Ball * generate_balls(int num_balls) {
-    vector<float> l_x;
-    vector<float>  l_y;
+Ball * generate_balls(int num_balls, int p, int L, int R, int bleft, int bright, int bbot, int btop) {
+    vector<pair<float, float>> pos;
     Ball *balls = new Ball[num_balls];
-    for (int i = BOUND_LEFT+5; i < BOUND_RIGHT-5; ++i) { // no balls at boundary
-        l_x.push_back(i+1.0);
-    }
-    for (int i = BOUND_BOT+5; i < BOUND_TOP-5; ++i) { // no balls at boundary
-        l_y.push_back(i+1);
+    for (float j = bbot+2; j < btop-2; j+=2.1) { // no balls at boundary and no touching balls
+        for (float i = bleft+2; i < bright-2; i+=2.1) { // no balls at boundary and no touching balls
+            pos.push_back(make_pair(i+0.0, j+0.0));   
+        }
     }
 
     std::random_device rd;
     std::mt19937 g(rd());
  
-    std::shuffle(l_x.begin(), l_x.end(), g);
-    std::shuffle(l_y.begin(), l_y.end(), g);
+    std::shuffle(pos.begin(), pos.end(), g);
 
-
+    int n; // (global index for given (p,i)
     for(int i=0;i<num_balls;i++){
         uniform_int_distribution<> vel_distr(-10,10);
-        balls[i] = Ball(1,1,l_x[i], l_y[i], vel_distr(g),vel_distr(g));
+        n = p*L+min(p,R)+i;
+        
+        balls[i] = Ball(1,1,pos[i].first, pos[i].second, vel_distr(g),vel_distr(g), n);
     }
 
     return balls;
     
 }
 
-int main(int args, char **kwargs) {
+int main(int argc, char **argv) {
+
+    int P, p, tag;
+    MPI_Status status;
+    tag = 123;
     
+    MPI_Init(&argc, &argv);
+    MPI_Comm_size(MPI_COMM_WORLD, &P);
+    MPI_Comm_rank(MPI_COMM_WORLD, &p);
+
+    // We assume linear data distribution. The formulae according to the lecture are:
+    int L = (int) Nballs/P;
+    int R = Nballs % P;
+    int I = (int) (Nballs+P-p-1)/P; //(number of local elements)
+    //int n = p*L+min(p,R)+i; // (global index for given (p,i)
+
     auto coordinates = new double[Ntime][Nballs][2]; // init array holding storing values of coordinates
 
-    Ball *ball = generate_balls(Nballs);
+    cout << I << "\n";
+    /* generate balls
+            divide x axis into P intervals; each processor generates balls in one interval */
+    float dx = (BOUND_RIGHT - BOUND_LEFT) / P;
+    float bleft = p*dx;
+    float bright = bleft + dx;
+    Ball *ball = generate_balls(I, p, L, R, bleft, bright, BOUND_BOT, BOUND_TOP);
+    //Ball ball[] = {Ball(1,1,48, 50, 1, 0, 0), Ball(1,1,52,50,-1,0,1)};
     Detector det(ball, Nballs);
 
     for(int n=0;n<Ntime;n++){ // loop through time
@@ -78,6 +98,7 @@ int main(int args, char **kwargs) {
         }
     }
 
+    if(p==0){write_to_file(coordinates);}
 
-    write_to_file(coordinates);
+    MPI_Finalize();
 }
