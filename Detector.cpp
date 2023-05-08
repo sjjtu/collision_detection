@@ -4,19 +4,20 @@
 #include <iostream>
 #include <cmath>
 
-Detector::Detector(Ball *ball, int nBalls){
+Detector::Detector(Ball *ball, int nBalls, int nBalls_global){
 
     this->nBalls = nBalls;
+    this->nBalls_global = nBalls_global;
 
     this->ball = ball;
     this->x_coord.reserve(this->nBalls);
     this->y_coord.reserve(this->nBalls);
 
-    this->counter_table = vector<vector<int>> (nBalls, vector<int>(nBalls));
 
     for(int i=0;i<nBalls;i++){
         x_coord.push_back(&ball[i]);
         y_coord.push_back(&ball[i]);
+        index_map.insert({ball[i].id, &ball[i]});
     }
 }
 
@@ -36,7 +37,7 @@ void Detector::sweep_and_prune() {
     this->status_list_x.clear();
     this->status_list_y.clear();
 
-    this->counter_table = vector<vector<int>> (nBalls, vector<int>(nBalls));
+    this->counter_table = vector<vector<int>> (nBalls_global, vector<int>(nBalls_global));
 
 
     for(int i=0;i<x_coord.size();i++) {
@@ -49,7 +50,7 @@ void Detector::sweep_and_prune() {
                 status_list_x.erase(status_list_x.begin() + j);
                 j--;
             } else {
-                //cout << "reported pair x " << status_list_x[j].id << " with " << x_coord[i].id << endl;
+                //cout << "reported pair x " << (*status_list_x[j]).id << " with " << (*x_coord[i]).id << endl;
                 // cout << "    x coordinates: " << ball[x_coord[i]].position_x << " and " << ball[status_list_x[j]].position_x << endl;
                 counter_table[(*x_coord[i]).id][(*status_list_x[j]).id] += 1;
                 counter_table[(*status_list_x[j]).id][(*x_coord[i]).id] += 1; //matrix is symmetric??
@@ -69,7 +70,7 @@ void Detector::sweep_and_prune() {
                 status_list_y.erase(status_list_y.begin() + j);
                 j--;
             } else {
-                //cout << "reported pair y " << status_list_y[j].id << " with " << y_coord[i].id << endl;
+                //cout << "reported pair y " << (*status_list_y[j]).id << " with " << (*y_coord[i]).id << endl;
                 // cout << "    y coordinates: " << ball[y_coord[i]].position_y << " and " << ball[status_list_y[j]].position_y << endl;
                 counter_table[(*y_coord[i]).id][(*status_list_y[j]).id] += 1;
                 counter_table[(*status_list_y[j]).id][(*y_coord[i]).id] += 1; //matrix is symmetric??
@@ -81,34 +82,34 @@ void Detector::sweep_and_prune() {
 }
 
 bool Detector::detect_collision(int ball_i, int ball_j){
-    return pow(ball[ball_i].position_x-ball[ball_j].position_x, 2) 
-        + pow(ball[ball_i].position_y-ball[ball_j].position_y, 2) <= 
-                                                    pow(ball[ball_i].radius + ball[ball_j].radius, 2); 
+    return pow((*index_map.find(ball_i)->second).position_x-(*index_map.find(ball_j)->second).position_x, 2) 
+        + pow((*index_map.find(ball_i)->second).position_y-(*index_map.find(ball_j)->second).position_y, 2) <= 
+                                                    pow((*index_map.find(ball_i)->second).radius + (*index_map.find(ball_j)->second).radius, 2); 
 }
 
 void Detector::update_velocity(int time_step) {
-    for(int i=0;i<nBalls;i++) {
+    for(int i=0;i<nBalls_global;i++) {
         for(int j=0;j<i;j++){ // only need lower half of matrix
             if (counter_table[i][j] == 2 && detect_collision(i, j)){
-                printf("collision detected between %d and %d in time step %d \n", i, j, time_step);
+                //printf("collision detected between %d and %d in time step %d \n", i, j, time_step);
                 // Compute the total x and y momenta before the collision
-                double px_before = ball[i].mass*ball[i].velocity_x+ball[j].mass*ball[j].velocity_x;
-                double py_before = ball[i].mass*ball[i].velocity_y+ball[j].mass*ball[j].velocity_y;
-                //double ke_before = 0.5*ball[i].mass*(ball[i].velocity_x*ball[i].velocity_x+ball[i].velocity_y*ball[i].velocity_y) + 0.5*ball[j].mass*(ball[j].velocity_x*ball[j].velocity_x+ball[j].velocity_y*ball[j].velocity_y); //Kinetic energy before the collision
-                double v_rel_x = ball[i].velocity_x-ball[j].velocity_x;
-                double v_rel_y = ball[i].velocity_y-ball[j].velocity_y;
-                double total_mass = ball[i].mass+ball[j].mass;
-                double v1x_new = (px_before - ball[j].mass*v_rel_x)/total_mass;
-                double v1y_new = (py_before - ball[j].mass*v_rel_y)/total_mass;
-                double v2x_new = (px_before + ball[i].mass*v_rel_x)/total_mass;
-                double v2y_new = (py_before + ball[i].mass*v_rel_y)/total_mass;
-                //double m1 = ball[i].mass;
-                //double m2 = ball[j].mass;
+                double px_before = (*index_map.find(i)->second).mass*(*index_map.find(i)->second).velocity_x+(*index_map.find(j)->second).mass*(*index_map.find(j)->second).velocity_x;
+                double py_before = (*index_map.find(i)->second).mass*(*index_map.find(i)->second).velocity_y+(*index_map.find(j)->second).mass*(*index_map.find(j)->second).velocity_y;
+                //double ke_before = 0.5*(*index_map.find(i)->second).mass*((*index_map.find(i)->second).velocity_x*(*index_map.find(i)->second).velocity_x+(*index_map.find(i)->second).velocity_y*(*index_map.find(i)->second).velocity_y) + 0.5*(*index_map.find(j)->second).mass*((*index_map.find(j)->second).velocity_x*(*index_map.find(j)->second).velocity_x+(*index_map.find(j)->second).velocity_y*(*index_map.find(j)->second).velocity_y); //Kinetic energy before the collision
+                double v_rel_x = (*index_map.find(i)->second).velocity_x-(*index_map.find(j)->second).velocity_x;
+                double v_rel_y = (*index_map.find(i)->second).velocity_y-(*index_map.find(j)->second).velocity_y;
+                double total_mass = (*index_map.find(i)->second).mass+(*index_map.find(j)->second).mass;
+                double v1x_new = (px_before - (*index_map.find(j)->second).mass*v_rel_x)/total_mass;
+                double v1y_new = (py_before - (*index_map.find(j)->second).mass*v_rel_y)/total_mass;
+                double v2x_new = (px_before + (*index_map.find(i)->second).mass*v_rel_x)/total_mass;
+                double v2y_new = (py_before + (*index_map.find(i)->second).mass*v_rel_y)/total_mass;
+                //double m1 = (*index_map.find(i)->second).mass;
+                //double m2 = (*index_map.find(j)->second).mass;
                 //double ke_after = 0.5*m1*(v1x_new*v1x_new + v1y_new*v1y_new) + 0.5*m2*(v2x_new*v2x_new + v2y_new*v2y_new);
-                ball[i].velocity_x = v1x_new;
-                ball[i].velocity_y = v1y_new;
-                ball[j].velocity_x = v2x_new;
-                ball[j].velocity_y = v2y_new;
+                (*index_map.find(i)->second).velocity_x = v1x_new;
+                (*index_map.find(i)->second).velocity_y = v1y_new;
+                (*index_map.find(j)->second).velocity_x = v2x_new;
+                (*index_map.find(j)->second).velocity_y = v2y_new;
             }
         }
     }

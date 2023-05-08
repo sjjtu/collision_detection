@@ -1,2 +1,2 @@
 To compile:
-g++ Detector.cpp ball.cpp main.cpp 
+g++ Detector.cpp ball.cpp BallSorter.cpp main.cpp 

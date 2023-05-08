@@ -2,7 +2,7 @@
  
  Ball::Ball(){};
 
- Ball::Ball(float r , float m, float pos_x, float pos_y, float vel_x, float vel_y, int i){
+ Ball::Ball(float r , float m, float pos_x, float pos_y, float vel_x, float vel_y, float i){
             radius = r;
             mass = m;
             position_x = pos_x;

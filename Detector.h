@@ -6,7 +6,8 @@ using namespace std;
 class Detector{
     public:
         Ball *ball;
-        int nBalls;
+        int nBalls, nBalls_global;
+        unordered_map <int, Ball*> index_map;
         vector<Ball*> status_list_x; // list of pointers to active ball for x axis
         vector<Ball*> status_list_y; // list of active ball for y axis
 
@@ -16,7 +17,7 @@ class Detector{
         vector<int> collision_candidates; // storing the result of S&P
         vector<vector<int>> counter_table;
 
-        Detector(Ball *ball, int nBalls);
+        Detector(Ball *ball, int nBalls, int nBalls_global);
     
     public:
         void sweep_and_prune();

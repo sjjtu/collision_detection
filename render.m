@@ -15,7 +15,7 @@ xmin = 0;
 ymax = 100;
 ymin = 0;
 
-Ntime=100;
+Ntime = 200;
 
 F(Ntime) = struct('cdata',[],'colormap',[]);
 
@@ -41,8 +41,8 @@ toc
 close(wb)
 
 vw = VideoWriter("balls");
-vw.FrameRate = 25;
-vw.Quality = 50;
+vw.FrameRate = 50;
+vw.Quality = 100;
 open(vw);
 writeVideo(vw, F);
 close(vw);
