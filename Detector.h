@@ -24,6 +24,6 @@ class Detector{
         bool detect_collision(int ball_i, int ball_j);
         void update_velocity(int time_step);
         void sort_axis();
-        void collision_with_boundary(int nballs, int time_step,double x_left,double x_right,double y_top,double y_bottom);
+        void collision_with_boundary(int time_step,double x_left,double x_right,double y_top,double y_bottom);
 
 };

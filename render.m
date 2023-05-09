@@ -2,6 +2,7 @@ clear
 close all
 clc
 figure("Visible","off")
+
 wb = waitbar(0, 'Starting');
 
 load("out.txt")
@@ -15,22 +16,21 @@ xmin = 0;
 ymax = 100;
 ymin = 0;
 
-Ntime = 200;
-
 F(Ntime) = struct('cdata',[],'colormap',[]);
-
+I = imread('sapce.jpg'); 
 tic
 for n=1:Ntime
      
-    for i=1:Nballs
-        %plot(out(n,2*i-1), out(n,2*i),"Marker","o");
-        
-        circle(out(n,2*i-1), out(n,2*i),1);
-        axis equal
-        ylim([ymin, ymax])
-        xlim([xmin, xmax])
-        hold on
-    end
+           
+    viscircles([out(n,1:2:end)', out(n,2:2:end)'],1, "LineWidth",.1);
+    axis equal
+    ylim([ymin, ymax])
+    xlim([xmin, xmax])
+    hold on
+    
+    %set(gca,'Color','k')
+    h = image(xlim,ylim,I); 
+    uistack(h,'bottom')
     
     waitbar(n/Ntime, wb, sprintf('Progress: %d %%', floor(n/Ntime*100)));
     children = get(gca, 'children');
@@ -46,12 +46,3 @@ vw.Quality = 100;
 open(vw);
 writeVideo(vw, F);
 close(vw);
-
-function h = circle(x,y,r)
-    hold on
-    th = 0:pi/50:2*pi;
-    xunit = r * cos(th) + x;
-    yunit = r * sin(th) + y;
-    h = plot(xunit, yunit, "Color","black");
-    hold off
-end

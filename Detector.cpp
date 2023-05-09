@@ -4,6 +4,8 @@
 #include <iostream>
 #include <cmath>
 
+const double TOL = 1E-3;
+
 Detector::Detector(Ball *ball, int nBalls, int nBalls_global){
 
     this->nBalls = nBalls;
@@ -21,7 +23,7 @@ Detector::Detector(Ball *ball, int nBalls, int nBalls_global){
     }
 }
 
-void Detector::sort_axis(){ 
+void Detector::sort_axis(){ // TODO: remove x sort since already sorted
     sort(x_coord.begin(), x_coord.end(), [=](Ball *a, Ball *b)->bool{
         return ((*a).position_x-(*a).radius) < ((*b).position_x - (*b).radius);
     });
@@ -40,12 +42,12 @@ void Detector::sweep_and_prune() {
     this->counter_table = vector<vector<int>> (nBalls_global, vector<int>(nBalls_global));
 
 
-    for(int i=0;i<x_coord.size();i++) {
+    for(int i=0;i<(int) x_coord.size();i++) {
         // X AXIS
-        for(int j=0;j<status_list_x.size();++j){
+        for(int j=0;j<(int) status_list_x.size();++j){
             //cout << "comparing " << (*status_list_x[j]).id << " with " << (*x_coord[i]).id << endl;
             //cout << "current" << (*x_coord[i]).position_x << " status list:" << (*status_list_x[j]).position_x << endl;
-            if((*x_coord[i]).position_x-(*x_coord[i]).radius > (*status_list_x[j]).position_x+(*status_list_x[j]).radius) {
+            if((*x_coord[i]).position_x-(*x_coord[i]).radius > (*status_list_x[j]).position_x+(*status_list_x[j]).radius +TOL) {
                 //cout << " object is poped " << status_list_x[j] << endl;
                 status_list_x.erase(status_list_x.begin() + j);
                 j--;
@@ -61,11 +63,11 @@ void Detector::sweep_and_prune() {
         
     }
 
-    for(int i=0;i<y_coord.size();i++) {
+    for(int i=0;i<(int) y_coord.size();i++) {
         // Y AXIS
-        for(int j=0;j<status_list_y.size();++j){
+        for(int j=0;j<(int) status_list_y.size();++j){
             //cout << "comparing " << status_list_x[j] << " with " << x_coord[i] << endl;
-            if((*y_coord[i]).position_y-(*y_coord[i]).radius > (*status_list_y[j]).position_y+(*status_list_y[j]).radius) {
+            if((*y_coord[i]).position_y-(*y_coord[i]).radius > (*status_list_y[j]).position_y+(*status_list_y[j]).radius + TOL) {
                 //cout << " object is poped " << status_list_x[j] << endl;
                 status_list_y.erase(status_list_y.begin() + j);
                 j--;
@@ -84,7 +86,7 @@ void Detector::sweep_and_prune() {
 bool Detector::detect_collision(int ball_i, int ball_j){
     return pow((*index_map.find(ball_i)->second).position_x-(*index_map.find(ball_j)->second).position_x, 2) 
         + pow((*index_map.find(ball_i)->second).position_y-(*index_map.find(ball_j)->second).position_y, 2) <= 
-                                                    pow((*index_map.find(ball_i)->second).radius + (*index_map.find(ball_j)->second).radius, 2); 
+                                                    pow((*index_map.find(ball_i)->second).radius + (*index_map.find(ball_j)->second).radius, 2) + TOL; 
 }
 
 void Detector::update_velocity(int time_step) {
@@ -115,26 +117,25 @@ void Detector::update_velocity(int time_step) {
     }
 }
 
-void Detector::collision_with_boundary(int nballs, int time_step,double x_left,double x_right,double y_top,double y_bottom) {
+void Detector::collision_with_boundary(int time_step,double x_left,double x_right,double y_top,double y_bottom) {
     double x_left_boundrary = x_left;
     double x_right_boundrary = x_right;
     double y_top_boundrary = y_top;
     double y_bottom_boundrary = y_bottom;
-    double margin = 0.0001;
-    for (int i = 0; i< nballs; i++) {
-        if (abs(ball[i].position_x-x_left_boundrary) < margin+ball[i].radius){
+    for (int i = 0; i< nBalls; i++) {
+        if (abs(ball[i].position_x-x_left_boundrary) < TOL+ball[i].radius){
             //printf("collision detected between %d and boundary in time step %d \n", i, time_step);
             ball[i].velocity_x = -ball[i].velocity_x;
         };
-        if (abs(ball[i].position_x-x_right_boundrary) < margin+ball[i].radius){
+        if (abs(ball[i].position_x-x_right_boundrary) < TOL+ball[i].radius){
             //printf("collision detected between %d and boundary in time step %d \n", i, time_step);
             ball[i].velocity_x = -ball[i].velocity_x;
         };
-        if (abs(ball[i].position_y-y_top_boundrary) < margin+ball[i].radius){
+        if (abs(ball[i].position_y-y_top_boundrary) < TOL+ball[i].radius){
             //printf("collision detected between %d and boundary in time step %d \n", i, time_step);
             ball[i].velocity_y = -ball[i].velocity_y;
         };
-        if (abs(ball[i].position_y-y_bottom_boundrary) < margin+ball[i].radius){
+        if (abs(ball[i].position_y-y_bottom_boundrary) < TOL+ball[i].radius){
             //printf("collision detected between %d and boundary in time step %d \n", i, time_step);
             ball[i].velocity_y = -ball[i].velocity_y;
         };

@@ -1,4 +1,5 @@
 #include <cstdlib>
+#include <cstring>
 #include <stdio.h>
 #include <iostream>
 #include <random>
@@ -13,12 +14,13 @@ const double T = 30;
 const int FPS = 50;
 const double dt = 1.0/FPS;
 const int Ntime = T*FPS;
-const int Nballs = 160;
+const int Nballs = 320;
 const int BOUND_LEFT = 0;
 const int BOUND_RIGHT = 100;
 const int BOUND_TOP = 100;
 const int BOUND_BOT = 0;
 const int MAX_VEL = 5;
+const double TOL = 1E-3;
 
 void write_to_file(double content[Ntime][Nballs][2]){
     FILE *fp;
@@ -117,18 +119,20 @@ int main(int argc, char **argv) {
 
     /* generate balls
             divide x axis into P intervals; each processor generates balls in one interval */
-    float dx = (BOUND_RIGHT - BOUND_LEFT) / P;
+    float dx = ((float) BOUND_RIGHT - BOUND_LEFT) / P;
     float bleft = p*dx;
     float bright = bleft + dx;
     Ball *balls_local = generate_balls(I, p, L, R, bleft, bright, BOUND_BOT, BOUND_TOP);
-    
     //print_local_balls(p, balls_local, I, "local balls");
-    //Ball balls_local[] = {Ball(1,1,48, 50, 1, 0, 0), Ball(1,1,52,50,-1,0,1)};
-
+    // Ball *balls_local = (Ball *) malloc(sizeof(Ball));
+    // if(p==0) balls_local[0] = {Ball(1,1,52,50,-1,0,1)};
+    // if(p==1) balls_local[0] = {Ball(1,1,48, 50, 1, 0, 0)};
 
     Ball *balls_global = (Ball *) malloc(Nballs * sizeof(Ball));
     float *temp_balls_global, *temp_balls_local;
     int start_ind; // starting index for processor p
+    int left_ghost; // number of left boundary balls
+    int right_ghost; // number of right boundary balls
 
     double starttime = MPI_Wtime();
 
@@ -143,30 +147,44 @@ int main(int argc, char **argv) {
         BallSorter::sort_balls(balls_global, Nballs); // TODO: parallel sort
 
         /* Save current position of ALL balls */
-        for (int i = 0; i < Nballs; i++){
-            int global_ball_ind = (int) balls_global[i].id;
-            coordinates[n][global_ball_ind][0] = balls_global[i].position_x;
-            coordinates[n][global_ball_ind][1] = balls_global[i].position_y;
+        if(p==0){
+            for (int i = 0; i < Nballs; i++){
+                int global_ball_ind = (int) balls_global[i].id;
+                coordinates[n][global_ball_ind][0] = balls_global[i].position_x;
+                coordinates[n][global_ball_ind][1] = balls_global[i].position_y;
+            }
         }
 
         /* Split up balls */
         start_ind = p*L+min(p,R); // starting index for processor p
-        memcpy(balls_local, balls_global+start_ind, I*sizeof(Ball));
+        left_ghost = 0;
+        right_ghost = 0;
+        // include all balls right to the boundary that might collide with local balls
+        while(p<P-1 && start_ind+right_ghost < Nballs && balls_global[start_ind+I-1].position_x+balls_global[start_ind+I-1].radius >= balls_global[start_ind+right_ghost].position_x-balls_global[start_ind+right_ghost].radius - TOL){
+            right_ghost++;
+            //cout << "time " << n << " adding ball to porcessor " << p<< endl;
+        }
+        // same with left boundary
+        while(0<p && 0 < start_ind-left_ghost && balls_global[start_ind].position_x-balls_global[start_ind].radius <= balls_global[start_ind-left_ghost-1].position_x+balls_global[start_ind-left_ghost-1].radius +TOL){
+            left_ghost++;
+            //cout << "time " << n << " adding ball to porcessor " << p<< endl;
+        }
+        balls_local = (Ball *) malloc((I+left_ghost+right_ghost)*sizeof(Ball));
+        memcpy(balls_local, balls_global+start_ind-left_ghost, (I+left_ghost+right_ghost)*sizeof(Ball));
         
-        /* Collision detection */ // TODO: check collision between regions
-        Detector det(balls_local, I, Nballs);
-        
-
+        /*Local Collision detection including boundary balls*/
+        Detector det(balls_local, (I+left_ghost+right_ghost), Nballs);
         //cout << "time step " << n << "\n";
         det.sweep_and_prune();
         det.update_velocity(n);
-        det.collision_with_boundary(I,n, BOUND_LEFT, BOUND_RIGHT, BOUND_TOP, BOUND_BOT);
+        det.collision_with_boundary(n, BOUND_LEFT, BOUND_RIGHT, BOUND_TOP, BOUND_BOT); // TODO: only for inner local
             
-        /* Update position of local balls*/
-        for (int i = 0; i < I; i++){
-            balls_local[i].update(dt); 
-        }
+        /* Update position of local balls without boundary balls*/
         
+        for (int i = 0; i < I; i++){
+            balls_local[i] = balls_local[i+left_ghost]; // overwrite left ghosts
+            balls_local[i].update(dt); 
+        }        
     }
 
     double endtime = MPI_Wtime();
