@@ -14,13 +14,13 @@ const double T = 30;
 const int FPS = 50;
 const double dt = 1.0/FPS;
 const int Ntime = T*FPS;
-const int Nballs = 320;
+const int Nballs = 5000;
 const int BOUND_LEFT = 0;
-const int BOUND_RIGHT = 100;
-const int BOUND_TOP = 100;
+const int BOUND_RIGHT = 500;
+const int BOUND_TOP = 500;
 const int BOUND_BOT = 0;
-const int MAX_VEL = 5;
-const double TOL = 1E-3;
+const int MAX_VEL = 20;
+const double TOL = 1E-2;
 
 void write_to_file(double content[Ntime][Nballs][2]){
     FILE *fp;
@@ -41,6 +41,15 @@ void print_local_balls(int p, Ball *balls, int sz, std::string header=""){
     for(int i=0;i<sz;i++){
         cout << "    ball " << balls[i].id << ": x:" << balls[i].position_x << "  y:" << balls[i].position_y
         << " vx:" << balls[i].velocity_x << " vy:" << balls[i].velocity_y;
+    }
+    cout << endl;
+}
+
+void print_local_balls_id(int p, Ball *balls, int sz, std::string header=""){
+    cout << header << endl;
+    cout << "Processor " << p << " with balls: ";
+    for(int i=0;i<sz;i++){
+        cout << "    ball " << balls[i].id;
     }
     cout << endl;
 }
@@ -99,6 +108,43 @@ Ball * array_to_balls(float *arr, int sz_balls){
     return balls;
 }
 
+float * merge(float *l, float *r, int s){
+    int i = 0;
+    int j = 0;
+    int end = 2*s;
+    float *temp = (float *) malloc(end*7*__SIZEOF_FLOAT__);
+    for(int k=0;k<end;k++){
+        if(i<s && (j>=s || l[7*i+2]<r[7*j+2])){
+            temp[k*7+0] = l[i*7+0];
+            temp[k*7+1] = l[i*7+1];
+            temp[k*7+2] = l[i*7+2];
+            temp[k*7+3] = l[i*7+3];
+            temp[k*7+4] = l[i*7+4];
+            temp[k*7+5] = l[i*7+5];
+            temp[k*7+6] = l[i*7+6];
+            i++;
+        } else {
+            temp[k*7+0] = r[j*7+0];
+            temp[k*7+1] = r[j*7+1];
+            temp[k*7+2] = r[j*7+2];
+            temp[k*7+3] = r[j*7+3];
+            temp[k*7+4] = r[j*7+4];
+            temp[k*7+5] = r[j*7+5];
+            temp[k*7+6] = r[j*7+6];
+            j++;
+        }
+    }
+    return temp;
+}
+
+int bitXor(int x, int y) 
+{
+    int a = x & y;
+    int b = ~x & ~y;
+    int z = ~a & ~b;
+    return z;
+}   
+
 int main(int argc, char **argv) {
 
     int P, p, tag;
@@ -109,16 +155,14 @@ int main(int argc, char **argv) {
     MPI_Comm_size(MPI_COMM_WORLD, &P);
     MPI_Comm_rank(MPI_COMM_WORLD, &p);
 
-    // We assume linear data distribution. The formulae according to the lecture are:
+    /*We assume linear data distribution. The formulae according to the lecture are: */
     int L = (int) Nballs/P;
     int R = Nballs % P;
     int I = (int) (Nballs+P-p-1)/P; //(number of local elements)
-    //int n = p*L+min(p,R)+i; // (global index for given (p,i)
 
     auto coordinates = new double[Ntime][Nballs][2]; // init array holding storing values of coordinates
 
-    /* generate balls
-            divide x axis into P intervals; each processor generates balls in one interval */
+    /* generate balls: divide x axis into P intervals; each processor generates balls in one interval */
     float dx = ((float) BOUND_RIGHT - BOUND_LEFT) / P;
     float bleft = p*dx;
     float bright = bleft + dx;
@@ -129,22 +173,42 @@ int main(int argc, char **argv) {
     // if(p==1) balls_local[0] = {Ball(1,1,48, 50, 1, 0, 0)};
 
     Ball *balls_global = (Ball *) malloc(Nballs * sizeof(Ball));
-    float *temp_balls_global, *temp_balls_local;
+    float *temp_balls_global, *temp_balls_local, *temp_recv, *temp_send, *temp_merge;
     int start_ind; // starting index for processor p
     int left_ghost; // number of left boundary balls
     int right_ghost; // number of right boundary balls
 
     double starttime = MPI_Wtime();
+    int height = (int) log2(P); // make sure that P is power 2! //TODO: check that?
+    int dest_p;
+    int sending_sz;
+
+    temp_merge = (float *) malloc(Nballs*7*__SIZEOF_FLOAT__);
+    temp_recv = (float *) malloc(Nballs/2.0*7*__SIZEOF_FLOAT__);
+    temp_send = (float *) malloc(Nballs*7*__SIZEOF_FLOAT__);
 
     for(int n=0;n<Ntime;n++){ // loop through time
 
-        /* Use MPI_Allgather to exchange all balls with other processors */
+        /* Use parallel merge sort to sort and exchange balls with all processors.*/ //TODO: not stable?
+        BallSorter::sort_balls(balls_local, I);
         temp_balls_local = balls_to_array(balls_local, I);
         temp_balls_global = (float *) malloc(Nballs * 7 * __SIZEOF_FLOAT__);
-        MPI_Allgather(temp_balls_local, (I)*7, MPI_FLOAT, temp_balls_global, (I)*7, MPI_FLOAT, MPI_COMM_WORLD); // TODO: use allgatherv
-        
-        balls_global = array_to_balls(temp_balls_global, Nballs);
-        BallSorter::sort_balls(balls_global, Nballs); // TODO: parallel sort
+
+        sending_sz = I;
+        temp_send = balls_to_array(balls_local, I);
+        for(int i=0;i<height;i++){
+            
+            dest_p = bitXor(p, pow(2,i));
+            MPI_Sendrecv(temp_send, sending_sz*7, MPI_FLOAT, dest_p, tag, 
+                        temp_recv, sending_sz*7, MPI_FLOAT, dest_p, tag, 
+                        MPI_COMM_WORLD, &status);
+            temp_send = merge(temp_recv, temp_send, sending_sz);
+            //memcpy(temp_send, temp_merge, sending_sz*7*2*__SIZEOF_FLOAT__);
+            sending_sz *= 2;
+            
+        }
+        balls_global = array_to_balls(temp_send, Nballs);
+
 
         /* Save current position of ALL balls */
         if(p==0){

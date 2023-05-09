@@ -10,10 +10,10 @@ load("out.txt")
 [Ntime, Nballs2] = size(out);
 Nballs = Nballs2 / 2;
 
-xmax = 100;
+xmax = 500;
 xmin = 0;
 
-ymax = 100;
+ymax = 500;
 ymin = 0;
 
 F(Ntime) = struct('cdata',[],'colormap',[]);
