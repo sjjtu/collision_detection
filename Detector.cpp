@@ -24,9 +24,9 @@ Detector::Detector(Ball *ball, int nBalls, int nBalls_global){
 }
 
 void Detector::sort_axis(){ // TODO: remove x sort since already sorted
-    sort(x_coord.begin(), x_coord.end(), [=](Ball *a, Ball *b)->bool{
-        return ((*a).position_x-(*a).radius) < ((*b).position_x - (*b).radius);
-    });
+    // sort(x_coord.begin(), x_coord.end(), [=](Ball *a, Ball *b)->bool{
+    //     return ((*a).position_x-(*a).radius) < ((*b).position_x - (*b).radius);
+    // });
 
     sort(y_coord.begin(), y_coord.end(), [=](Ball *a, Ball *b)->bool{
         return ((*a).position_y-(*a).radius) < ((*b).position_y - (*b).radius);

@@ -10,10 +10,10 @@ load("out.txt")
 [Ntime, Nballs2] = size(out);
 Nballs = Nballs2 / 2;
 
-xmax = 100;
+xmax = 200;
 xmin = 0;
 
-ymax = 100;
+ymax = 200;
 ymin = 0;
 F(Ntime) = struct('cdata',[],'colormap',[]);
 I = imread('sapce.jpg'); 

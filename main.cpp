@@ -13,22 +13,21 @@
 const double T = 30;
 const int FPS = 50;
 const double dt = 1.0/FPS;
-const int Ntime = T*FPS;
-const int Nballs = 64;
+#define Ntime (int) T*FPS
 const int BOUND_LEFT = 0;
-const int BOUND_RIGHT = 100;
-const int BOUND_TOP = 100;
+const int BOUND_RIGHT = 2000;
+const int BOUND_TOP = 2000;
 const int BOUND_BOT = 0;
-const int MAX_VEL = 10;
-const double TOL = 1E-2;
+const int MAX_VEL = 50;
+const double TOL = 1E-1;
 
-void write_to_file(double content[Ntime][Nballs][2]){
+void write_to_file(double content[][Ntime][2], int Nballs){
     FILE *fp;
     fp = fopen("out.txt","w");
     for (int n = 0; n < Ntime; n++) {
         for (int i = 0; i < Nballs; i++) {
-            fprintf(fp, "%f ", content[n][i][0]);
-            fprintf(fp, "%f ", content[n][i][1]);
+            fprintf(fp, "%f ", content[i][n][0]);
+            fprintf(fp, "%f ", content[i][n][1]);
         }
         fprintf(fp, "\n");
     }
@@ -147,6 +146,13 @@ int bitXor(int x, int y)
 
 int main(int argc, char **argv) {
 
+    /* Find problem size N from command line */
+    if (argc < 2) {
+        printf("No size N given\n");
+        exit(1);
+    }
+    int Nballs = atoi(argv[1]);
+
     int P, p, tag;
     MPI_Status status;
     tag = 123;
@@ -160,7 +166,7 @@ int main(int argc, char **argv) {
     int R = Nballs % P;
     int I = (int) (Nballs+P-p-1)/P; //(number of local elements)
 
-    auto coordinates = new double[Ntime][Nballs][2]; // init array holding storing values of coordinates
+    auto coordinates = new double[Nballs][Ntime][2]; // init array holding storing values of coordinates
 
     /* generate balls: divide x axis into P intervals; each processor generates balls in one interval */
     float dx = ((float) BOUND_RIGHT - BOUND_LEFT) / P;
@@ -187,7 +193,7 @@ int main(int argc, char **argv) {
     temp_recv = (float *) malloc(Nballs/2.0*7*__SIZEOF_FLOAT__);
     temp_send = (float *) malloc(Nballs*7*__SIZEOF_FLOAT__);
 
-    for(int n=0;n<Ntime;n++){ // loop through time
+    for(int n=0;n<1;n++){ // loop through time
 
         /* Use parallel merge sort to sort and exchange balls with all processors.*/ //TODO: not stable?
         BallSorter::sort_balls(balls_local, I);
@@ -214,8 +220,8 @@ int main(int argc, char **argv) {
         if(p==0){
             for (int i = 0; i < Nballs; i++){
                 int global_ball_ind = (int) balls_global[i].id;
-                coordinates[n][global_ball_ind][0] = balls_global[i].position_x;
-                coordinates[n][global_ball_ind][1] = balls_global[i].position_y;
+                coordinates[global_ball_ind][n][0] = balls_global[i].position_x;
+                coordinates[global_ball_ind][n][1] = balls_global[i].position_y;
             }
         }
 
@@ -255,7 +261,7 @@ int main(int argc, char **argv) {
 
     if(p==0) cout << "Nballs: " << Nballs << " NProc: " << P << " Ntime: " << Ntime << " Time (s): " << endtime - starttime << endl;
 
-    if(p==0){write_to_file(coordinates);}
+    //if(p==0){write_to_file(coordinates, Nballs);}
 
     MPI_Finalize();
 }
