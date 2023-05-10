@@ -14,7 +14,7 @@ class Detector{
         vector<Ball*> x_coord;
         vector<Ball*> y_coord;
 
-        vector<int> collision_candidates; // storing the result of S&P
+        vector<pair<int,int>> collision_candidates; // storing the result of S&P
         vector<vector<int>> counter_table;
 
         Detector(Ball *ball, int nBalls, int nBalls_global);

@@ -15,10 +15,10 @@ const int FPS = 50;
 const double dt = 1.0/FPS;
 constexpr int Ntime = T*FPS;
 const int BOUND_LEFT = 0;
-const int BOUND_RIGHT = 2000;
-const int BOUND_TOP = 2000;
+const int BOUND_RIGHT = 1000;
+const int BOUND_TOP = 1000;
 const int BOUND_BOT = 0;
-const int MAX_VEL = 50;
+const int MAX_VEL = 100;
 const double TOL = 1E-1;
 
 void write_to_file(double content[][Ntime][2], int Nballs){
@@ -178,27 +178,27 @@ int main(int argc, char **argv) {
     // if(p==0) balls_local[0] = {Ball(1,1,52,50,-1,0,1)};
     // if(p==1) balls_local[0] = {Ball(1,1,48, 50, 1, 0, 0)};
 
+    double starttime = MPI_Wtime();
+
     Ball *balls_global = (Ball *) malloc(Nballs * sizeof(Ball));
-    float *temp_balls_global, *temp_balls_local, *temp_recv, *temp_send, *temp_merge;
+    float *temp_balls_global, *temp_balls_local;
+    float *temp_recv, *temp_send;
     int start_ind; // starting index for processor p
     int left_ghost; // number of left boundary balls
     int right_ghost; // number of right boundary balls
 
-    double starttime = MPI_Wtime();
+    
     int height = (int) log2(P); // make sure that P is power 2! //TODO: check that?
     int dest_p;
     int sending_sz;
 
-    temp_merge = (float *) malloc(Nballs*7*__SIZEOF_FLOAT__);
     temp_recv = (float *) malloc(Nballs/2.0*7*__SIZEOF_FLOAT__);
     temp_send = (float *) malloc(Nballs*7*__SIZEOF_FLOAT__);
 
-    for(int n=0;n<1;n++){ // loop through time
+    for(int n=0;n<Ntime;n++){ // loop through time
 
         /* Use parallel merge sort to sort and exchange balls with all processors.*/ //TODO: not stable?
         BallSorter::sort_balls(balls_local, I);
-        temp_balls_local = balls_to_array(balls_local, I);
-        temp_balls_global = (float *) malloc(Nballs * 7 * __SIZEOF_FLOAT__);
 
         sending_sz = I;
         temp_send = balls_to_array(balls_local, I);
@@ -215,6 +215,16 @@ int main(int argc, char **argv) {
         }
         balls_global = array_to_balls(temp_send, Nballs);
 
+         /* Use MPI_Allgather to exchange all balls with other processors */
+        // temp_balls_local = balls_to_array(balls_local, I);
+        // temp_balls_global = (float *) malloc(Nballs * 7 * __SIZEOF_FLOAT__);
+        // MPI_Allgather(temp_balls_local, (I)*7, MPI_FLOAT, temp_balls_global, (I)*7, MPI_FLOAT, MPI_COMM_WORLD); // TODO: use allgatherv
+
+        // balls_global = array_to_balls(temp_balls_global, Nballs);
+        // BallSorter::sort_balls(balls_global, Nballs); // TODO: parallel sort
+
+        // free(temp_send);
+        // free(temp_recv);
 
         /* Save current position of ALL balls */
         if(p==0){
@@ -230,18 +240,19 @@ int main(int argc, char **argv) {
         left_ghost = 0;
         right_ghost = 0;
         // include all balls right to the boundary that might collide with local balls
-        while(p<P-1 && start_ind+right_ghost < Nballs && balls_global[start_ind+I-1].position_x+balls_global[start_ind+I-1].radius >= balls_global[start_ind+right_ghost].position_x-balls_global[start_ind+right_ghost].radius - TOL){
+        while(p<P-1 && right_ghost <= I && balls_global[start_ind+I-1].position_x+balls_global[start_ind+I-1].radius >= balls_global[start_ind+I+right_ghost].position_x-balls_global[start_ind+I+right_ghost].radius - TOL){
             right_ghost++;
             //cout << "time " << n << " adding ball to porcessor " << p<< endl;
         }
         // same with left boundary
-        while(0<p && 0 < start_ind-left_ghost && balls_global[start_ind].position_x-balls_global[start_ind].radius <= balls_global[start_ind-left_ghost-1].position_x+balls_global[start_ind-left_ghost-1].radius +TOL){
+        while(0<p && left_ghost <= I && balls_global[start_ind].position_x-balls_global[start_ind].radius <= balls_global[start_ind-left_ghost-1].position_x+balls_global[start_ind-left_ghost-1].radius +TOL){
             left_ghost++;
             //cout << "time " << n << " adding ball to porcessor " << p<< endl;
         }
         balls_local = (Ball *) malloc((I+left_ghost+right_ghost)*sizeof(Ball));
         memcpy(balls_local, balls_global+start_ind-left_ghost, (I+left_ghost+right_ghost)*sizeof(Ball));
         
+        //cout << "left ghost balls: " << left_ghost << " right ghost balls: " << right_ghost << " local: " << I << endl;
         /*Local Collision detection including boundary balls*/
         Detector det(balls_local, (I+left_ghost+right_ghost), Nballs);
         //cout << "time step " << n << "\n";
@@ -255,13 +266,15 @@ int main(int argc, char **argv) {
             balls_local[i] = balls_local[i+left_ghost]; // overwrite left ghosts
             balls_local[i].update(dt); 
         }        
+
+        //cout << n << endl;
     }
 
     double endtime = MPI_Wtime();
 
     if(p==0) cout << "Nballs: " << Nballs << " NProc: " << P << " Ntime: " << Ntime << " Time (s): " << endtime - starttime << endl;
 
-    //if(p==0){write_to_file(coordinates, Nballs);}
+    if(p==0){write_to_file(coordinates, Nballs);}
 
     MPI_Finalize();
 }
