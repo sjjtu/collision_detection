@@ -19,14 +19,13 @@
 # Use Dardel's main partition
 #SBATCH -p main
 
-N=1000
 
-srun --ntasks-per-node 1 ./a.out $N
-srun --ntasks-per-node 2 ./a.out $N
-srun --ntasks-per-node 4 ./a.out $N
-srun --ntasks-per-node 8 ./a.out $N
-srun --ntasks-per-node 16 ./a.out $N
-srun --ntasks-per-node 32 ./a.out $N
-srun --ntasks-per-node 64 ./a.out $N
+srun --ntasks-per-node 1 ./a.out $0
+srun --ntasks-per-node 2 ./a.out $0
+srun --ntasks-per-node 4 ./a.out $0
+srun --ntasks-per-node 8 ./a.out $0
+srun --ntasks-per-node 16 ./a.out $0
+srun --ntasks-per-node 32 ./a.out $0
+srun --ntasks-per-node 64 ./a.out $0
 
 wait
