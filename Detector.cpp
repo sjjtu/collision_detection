@@ -98,13 +98,40 @@ void Detector::update_velocity(int time_step) {
                 double px_before = (*index_map.find(i)->second).mass*(*index_map.find(i)->second).velocity_x+(*index_map.find(j)->second).mass*(*index_map.find(j)->second).velocity_x;
                 double py_before = (*index_map.find(i)->second).mass*(*index_map.find(i)->second).velocity_y+(*index_map.find(j)->second).mass*(*index_map.find(j)->second).velocity_y;
                 //double ke_before = 0.5*(*index_map.find(i)->second).mass*((*index_map.find(i)->second).velocity_x*(*index_map.find(i)->second).velocity_x+(*index_map.find(i)->second).velocity_y*(*index_map.find(i)->second).velocity_y) + 0.5*(*index_map.find(j)->second).mass*((*index_map.find(j)->second).velocity_x*(*index_map.find(j)->second).velocity_x+(*index_map.find(j)->second).velocity_y*(*index_map.find(j)->second).velocity_y); //Kinetic energy before the collision
-                double v_rel_x = (*index_map.find(i)->second).velocity_x-(*index_map.find(j)->second).velocity_x;
-                double v_rel_y = (*index_map.find(i)->second).velocity_y-(*index_map.find(j)->second).velocity_y;
-                double total_mass = (*index_map.find(i)->second).mass+(*index_map.find(j)->second).mass;
-                double v1x_new = (px_before - (*index_map.find(j)->second).mass*v_rel_x)/total_mass;
-                double v1y_new = (py_before - (*index_map.find(j)->second).mass*v_rel_y)/total_mass;
-                double v2x_new = (px_before + (*index_map.find(i)->second).mass*v_rel_x)/total_mass;
-                double v2y_new = (py_before + (*index_map.find(i)->second).mass*v_rel_y)/total_mass;
+                
+                //double v_rel_x = (*index_map.find(i)->second).velocity_x-(*index_map.find(j)->second).velocity_x;
+                //double v_rel_y = (*index_map.find(i)->second).velocity_y-(*index_map.find(j)->second).velocity_y;
+                //double total_mass = (*index_map.find(i)->second).mass+(*index_map.find(j)->second).mass;
+                //double v1x_new = (px_before - (*index_map.find(j)->second).mass*v_rel_x)/total_mass;
+                //double v1y_new = (py_before - (*index_map.find(j)->second).mass*v_rel_y)/total_mass;
+                //double v2x_new = (px_before + (*index_map.find(i)->second).mass*v_rel_x)/total_mass;
+                //double v2y_new = (py_before + (*index_map.find(i)->second).mass*v_rel_y)/total_mass; 
+                
+                //To take into account the angle of intersection, We could do something like
+                double ball1_position_x = (*index_map.find(i)->second).position_x;
+                double ball1_position_y = (*index_map.find(i)->second).position_y;
+                double ball2_position_x = (*index_map.find(j)->second).position_x;
+                double ball2_position_y = (*index_map.find(j)->second).position_y;
+                double ball1_velocity_x_before = (*index_map.find(i)->second).velocity_x;
+                double ball1_velocity_y_before = (*index_map.find(i)->second).velocity_y;
+                double ball2_velocity_x_before = (*index_map.find(j)->second).velocity_x;
+                double ball2_velocity_y_before = (*index_map.find(j)->second).velocity_y;
+                double mass_quotient_ball1 = 2*(*index_map.find(i)->second).mass/total_mass;
+                double mass_quotient_ball2 = 2*(*index_map.find(j)->second).mass/total_mass;
+                double x_dist1 = (*index_map.find(i)->second).position_x-(*index_map.find(j)->second).position_x;
+                double y_dist1 = (*index_map.find(i)->second).position_y-(*index_map.find(j)->second).position_y;
+                double x_dist2 = (*index_map.find(j)->second).position_x-(*index_map.find(i)->second).position_x;
+                double y_dist2 = (*index_map.find(j)->second).position_y-(*index_map.find(i)->second).position_y;
+                double vx_diff1 = (*index_map.find(i)->second).velocity_x-(*index_map.find(j)->second).velocity_x;
+                double vy_diff1 = (*index_map.find(i)->second).velocity_y-(*index_map.find(j)->second).velocity_y;
+                double vx_diff2 = (*index_map.find(j)->second).velocity_x-(*index_map.find(i)->second).velocity_x;
+                double vy_diff2 = (*index_map.find(j)->second).velocity_y-(*index_map.find(i)->second).velocity_y;
+                double dist_squared = x_dist1*x_dist1 + y_dist1*y_dist1; //dosn't matter which orde when its a norm
+                // The new velocitoes of ball 1 and to shoud have the following components, 
+                double v1x_new = ball1_velocity_x_before - mass_quotient_ball1*(vx_diff1*x_dist1 + vy_diff1*y_dist1)*x_dist1/dist_squared;
+                double v1y_new = ball1_velocity_y_before - mass_quotient_ball1*(vx_diff1*x_dist1 + vy_diff1*y_dist1)*y_dist1/dist_squared;
+                double v2x_new = ball2_velocity_x_before - mass_quotient_ball2*(vx_diff2*x_dist2 + vy_diff2*y_dist2)*x_dist2/dist_squared;
+                double v2y_new = ball2_velocity_x_before - mass_quotient_ball2*(vx_diff2*x_dist2 + vy_diff2*y_dist2)*x_dist2/dist_squared;
                 //double m1 = (*index_map.find(i)->second).mass;
                 //double m2 = (*index_map.find(j)->second).mass;
                 //double ke_after = 0.5*m1*(v1x_new*v1x_new + v1y_new*v1y_new) + 0.5*m2*(v2x_new*v2x_new + v2y_new*v2y_new);
