@@ -19,7 +19,7 @@ const int BOUND_RIGHT = 1000;
 const int BOUND_TOP = 1000;
 const int BOUND_BOT = 0;
 const int MAX_VEL = 100;
-const double TOL = 1E-1;
+const double TOL = 1E-2;
 
 void write_to_file(double content[][Ntime][2], int Nballs){
     FILE *fp;
@@ -152,7 +152,6 @@ int main(int argc, char **argv) {
         exit(1);
     }
     int Nballs = atoi(argv[1]);
-
     int P, p, tag;
     MPI_Status status;
     tag = 123;
@@ -160,6 +159,11 @@ int main(int argc, char **argv) {
     MPI_Init(&argc, &argv);
     MPI_Comm_size(MPI_COMM_WORLD, &P);
     MPI_Comm_rank(MPI_COMM_WORLD, &p);
+
+    if(Nballs % P != 0) {
+        cout << "N must be multiple of P";
+        exit(1);
+    }
 
     /*We assume linear data distribution. The formulae according to the lecture are: */
     int L = (int) Nballs/P;
@@ -189,6 +193,10 @@ int main(int argc, char **argv) {
 
     
     int height = (int) log2(P); // make sure that P is power 2! //TODO: check that?
+    if(height != log2(P)) {
+        cout << "P must be power of 2!";
+        exit(1);
+    }
     int dest_p;
     int sending_sz;
 
@@ -197,7 +205,7 @@ int main(int argc, char **argv) {
 
     for(int n=0;n<Ntime;n++){ // loop through time
 
-        /* Use parallel merge sort to sort and exchange balls with all processors.*/ //TODO: not stable?
+        /* Use parallel merge sort to sort and exchange balls with all processors.*/
         BallSorter::sort_balls(balls_local, I);
 
         sending_sz = I;
@@ -218,10 +226,10 @@ int main(int argc, char **argv) {
          /* Use MPI_Allgather to exchange all balls with other processors */
         // temp_balls_local = balls_to_array(balls_local, I);
         // temp_balls_global = (float *) malloc(Nballs * 7 * __SIZEOF_FLOAT__);
-        // MPI_Allgather(temp_balls_local, (I)*7, MPI_FLOAT, temp_balls_global, (I)*7, MPI_FLOAT, MPI_COMM_WORLD); // TODO: use allgatherv
+        // MPI_Allgather(temp_balls_local, (I)*7, MPI_FLOAT, temp_balls_global, (I)*7, MPI_FLOAT, MPI_COMM_WORLD);
 
         // balls_global = array_to_balls(temp_balls_global, Nballs);
-        // BallSorter::sort_balls(balls_global, Nballs); // TODO: parallel sort
+        // BallSorter::sort_balls(balls_global, Nballs);
 
         // free(temp_send);
         // free(temp_recv);
@@ -258,7 +266,7 @@ int main(int argc, char **argv) {
         //cout << "time step " << n << "\n";
         det.sweep_and_prune();
         det.update_velocity(n);
-        det.collision_with_boundary(n, BOUND_LEFT, BOUND_RIGHT, BOUND_TOP, BOUND_BOT); // TODO: only for inner local
+        det.collision_with_boundary(n, BOUND_LEFT, BOUND_RIGHT, BOUND_TOP, BOUND_BOT);
             
         /* Update position of local balls without boundary balls*/
         
