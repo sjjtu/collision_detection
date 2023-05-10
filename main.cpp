@@ -10,10 +10,10 @@
 #include "Detector.h"
 #include "BallSorter.h"
 
-const double T = 30;
+const int T = 30;
 const int FPS = 50;
 const double dt = 1.0/FPS;
-#define Ntime (int) T*FPS
+constexpr int Ntime = T*FPS;
 const int BOUND_LEFT = 0;
 const int BOUND_RIGHT = 2000;
 const int BOUND_TOP = 2000;
