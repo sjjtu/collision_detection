@@ -10,19 +10,19 @@ load("out.txt")
 [Ntime, Nballs2] = size(out);
 Nballs = Nballs2 / 2;
 
-xmax = 500;
+xmax = 100;
 xmin = 0;
 
-ymax = 500;
+ymax = 100;
 ymin = 0;
-
 F(Ntime) = struct('cdata',[],'colormap',[]);
 I = imread('sapce.jpg'); 
 tic
 for n=1:Ntime
      
-           
-    viscircles([out(n,1:2:end)', out(n,2:2:end)'],1, "LineWidth",.1);
+    viscircles(out(n,1:2), 1, "LineWidth",.1, "Color","green");
+    hold on
+    viscircles([out(n,3:2:end)', out(n,4:2:end)'],1, "LineWidth",.1);
     axis equal
     ylim([ymin, ymax])
     xlim([xmin, xmax])

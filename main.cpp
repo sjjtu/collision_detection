@@ -14,12 +14,12 @@ const double T = 30;
 const int FPS = 50;
 const double dt = 1.0/FPS;
 const int Ntime = T*FPS;
-const int Nballs = 5000;
+const int Nballs = 64;
 const int BOUND_LEFT = 0;
-const int BOUND_RIGHT = 500;
-const int BOUND_TOP = 500;
+const int BOUND_RIGHT = 100;
+const int BOUND_TOP = 100;
 const int BOUND_BOT = 0;
-const int MAX_VEL = 20;
+const int MAX_VEL = 10;
 const double TOL = 1E-2;
 
 void write_to_file(double content[Ntime][Nballs][2]){
