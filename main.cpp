@@ -77,7 +77,7 @@ Ball * generate_balls(int num_balls, int p, int P, int L, int R, float bleft, fl
             c++; 
         }
     }
-    cout << "generating " << c << " balls in " << bleft << " " << bright << " and " <<bbot << " " << btop << endl;
+    //cout << "generating " << c << " balls in " << bleft << " " << bright << " and " <<bbot << " " << btop << endl;
     if(c < num_balls) {
         printf("field too small!");
         exit(1);
@@ -194,7 +194,7 @@ int main(int argc, char **argv) {
     double starttime = MPI_Wtime();
 
     Ball *balls_global = (Ball *) malloc(Nballs * sizeof(Ball));
-    float *temp_balls_global, *temp_balls_local;
+    //float *temp_balls_global, *temp_balls_local;
     float *temp_recv, *temp_send;
     int start_ind; // starting index for processor p
     int left_ghost; // number of left boundary balls

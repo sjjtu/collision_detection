@@ -3,6 +3,9 @@
 # This examples launches 8 MPI ranks on 2 nodes, with 4 ranks per
 # node.
 
+# compile
+make 
+
 # time allocation
 #SBATCH -A edu23.sf2568
 # job name

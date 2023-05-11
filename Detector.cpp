@@ -98,8 +98,8 @@ void Detector::update_velocity(int time_step) {
         if (detect_collision(i,j)){
             //printf("collision detected between %d and %d in time step %d \n", i, j, time_step);
             // Compute the total x and y momenta before the collision
-            double px_before = (*index_map.find(i)->second).mass*(*index_map.find(i)->second).velocity_x+(*index_map.find(j)->second).mass*(*index_map.find(j)->second).velocity_x;
-            double py_before = (*index_map.find(i)->second).mass*(*index_map.find(i)->second).velocity_y+(*index_map.find(j)->second).mass*(*index_map.find(j)->second).velocity_y;
+            //double px_before = (*index_map.find(i)->second).mass*(*index_map.find(i)->second).velocity_x+(*index_map.find(j)->second).mass*(*index_map.find(j)->second).velocity_x;
+            //double py_before = (*index_map.find(i)->second).mass*(*index_map.find(i)->second).velocity_y+(*index_map.find(j)->second).mass*(*index_map.find(j)->second).velocity_y;
             //double ke_before = 0.5*(*index_map.find(i)->second).mass*((*index_map.find(i)->second).velocity_x*(*index_map.find(i)->second).velocity_x+(*index_map.find(i)->second).velocity_y*(*index_map.find(i)->second).velocity_y) + 0.5*(*index_map.find(j)->second).mass*((*index_map.find(j)->second).velocity_x*(*index_map.find(j)->second).velocity_x+(*index_map.find(j)->second).velocity_y*(*index_map.find(j)->second).velocity_y); //Kinetic energy before the collision
             
             //double v_rel_x = (*index_map.find(i)->second).velocity_x-(*index_map.find(j)->second).velocity_x;
@@ -111,10 +111,10 @@ void Detector::update_velocity(int time_step) {
             //double v2y_new = (py_before + (*index_map.find(i)->second).mass*v_rel_y)/total_mass; 
             
             //To take into account the angle of intersection, We could do something like
-            double ball1_position_x = (*index_map.find(i)->second).position_x;
-            double ball1_position_y = (*index_map.find(i)->second).position_y;
-            double ball2_position_x = (*index_map.find(j)->second).position_x;
-            double ball2_position_y = (*index_map.find(j)->second).position_y;
+            // double ball1_position_x = (*index_map.find(i)->second).position_x;
+            // double ball1_position_y = (*index_map.find(i)->second).position_y;
+            // double ball2_position_x = (*index_map.find(j)->second).position_x;
+            // double ball2_position_y = (*index_map.find(j)->second).position_y;
             double ball1_velocity_x_before = (*index_map.find(i)->second).velocity_x;
             double ball1_velocity_y_before = (*index_map.find(i)->second).velocity_y;
             double ball2_velocity_x_before = (*index_map.find(j)->second).velocity_x;
