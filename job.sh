@@ -3,9 +3,6 @@
 # This examples launches 8 MPI ranks on 2 nodes, with 4 ranks per
 # node.
 
-# compile
-make 
-
 # time allocation
 #SBATCH -A edu23.sf2568
 # job name
@@ -22,13 +19,22 @@ make
 # Use Dardel's main partition
 #SBATCH -p main
 
+# compile
+make 
 
 srun --ntasks-per-node 1 ./a.out $1
+make clean
+
 srun --ntasks-per-node 2 ./a.out $1
+make clean
+
 srun --ntasks-per-node 4 ./a.out $1
+make clean
+
 srun --ntasks-per-node 8 ./a.out $1
+make clean
+
 srun --ntasks-per-node 16 ./a.out $1
-srun --ntasks-per-node 32 ./a.out $1
-srun --ntasks-per-node 64 ./a.out $1
+make clean
 
 wait
