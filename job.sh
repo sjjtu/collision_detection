@@ -20,7 +20,7 @@
 #SBATCH -p main
 
 # compile
-make 
+make CC=CC
 
 srun --ntasks-per-node 1 ./a.out $1
 make clean
