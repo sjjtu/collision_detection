@@ -15,11 +15,21 @@ const int FPS = 50;
 const double dt = 1.0/FPS;
 constexpr int Ntime = T*FPS;
 const int BOUND_LEFT = 0;
-const int BOUND_RIGHT = 1000;
-const int BOUND_TOP = 1000;
+const int BOUND_RIGHT = 500;
+const int BOUND_TOP = 500;
 const int BOUND_BOT = 0;
-const int MAX_VEL = 100;
+const int MAX_VEL = 5;
 const double TOL = 1E-2;
+
+void write_meta(double meta[5]){
+    FILE *fp;
+    fp = fopen("meta.txt","w");
+    for (int n = 0; n < 5; n++) {
+        fprintf(fp, "%f ", meta[n]);
+        fprintf(fp, "\n");
+    }
+    fclose(fp);
+}
 
 void write_to_file(double content[][Ntime][2], int Nballs){
     FILE *fp;
@@ -53,16 +63,25 @@ void print_local_balls_id(int p, Ball *balls, int sz, std::string header=""){
     cout << endl;
 }
 
-Ball * generate_balls(int num_balls, int p, int L, int R, int bleft, int bright, int bbot, int btop) {
+Ball * generate_balls(int num_balls, int p, int P, int L, int R, float bleft, float bright, float bbot, float btop) {
     vector<pair<float, float>> pos;
     Ball *balls = new Ball[num_balls];
-
+    int c = 0;
+    int thres_l = 0;  // threshold for left and right boundary, only for first p
+    if(p==0) thres_l = 2;
+    int thres_r = 0;  // threshold for left and right boundary, only for last p
+    if(p==P-1) thres_r = 2;
     for (float j = bbot+2; j < btop-2; j+=2.1) { // no balls at boundary and no touching balls
-        for (float i = bleft+2; i < bright-2; i+=2.1) { // no balls at boundary and no touching balls
-            pos.push_back(make_pair(i+0.0, j+0.0));   
+        for (float i = bleft+thres_l; i < bright-thres_r; i+=2.1) { // no balls at boundary and no touching balls
+            pos.push_back(make_pair(i+0.0, j+0.0));  
+            c++; 
         }
     }
-
+    cout << "generating " << c << " balls in " << bleft << " " << bright << " and " <<bbot << " " << btop << endl;
+    if(c < num_balls) {
+        printf("field too small!");
+        exit(1);
+    }
     std::random_device rd;
     std::mt19937 g(rd());
     std::shuffle(pos.begin(), pos.end(), g);
@@ -136,14 +155,6 @@ float * merge(float *l, float *r, int s){
     return temp;
 }
 
-int bitXor(int x, int y) 
-{
-    int a = x & y;
-    int b = ~x & ~y;
-    int z = ~a & ~b;
-    return z;
-}   
-
 int main(int argc, char **argv) {
 
     /* Find problem size N from command line */
@@ -161,7 +172,7 @@ int main(int argc, char **argv) {
     MPI_Comm_rank(MPI_COMM_WORLD, &p);
 
     if(Nballs % P != 0) {
-        cout << "N must be multiple of P";
+        cout << "N must be multiple of P\n";
         exit(1);
     }
 
@@ -170,14 +181,12 @@ int main(int argc, char **argv) {
     int R = Nballs % P;
     int I = (int) (Nballs+P-p-1)/P; //(number of local elements)
 
-    auto coordinates = new double[Nballs][Ntime][2]; // init array holding storing values of coordinates
-
     /* generate balls: divide x axis into P intervals; each processor generates balls in one interval */
     float dx = ((float) BOUND_RIGHT - BOUND_LEFT) / P;
     float bleft = p*dx;
     float bright = bleft + dx;
-    Ball *balls_local = generate_balls(I, p, L, R, bleft, bright, BOUND_BOT, BOUND_TOP);
-    //print_local_balls(p, balls_local, I, "local balls");
+    Ball *balls_local = generate_balls(I, p, P, L, R, bleft, bright, BOUND_BOT, BOUND_TOP);
+    // print_local_balls(p, balls_local, I, "local balls");
     // Ball *balls_local = (Ball *) malloc(sizeof(Ball));
     // if(p==0) balls_local[0] = {Ball(1,1,52,50,-1,0,1)};
     // if(p==1) balls_local[0] = {Ball(1,1,48, 50, 1, 0, 0)};
@@ -194,7 +203,7 @@ int main(int argc, char **argv) {
     
     int height = (int) log2(P); // make sure that P is power 2! //TODO: check that?
     if(height != log2(P)) {
-        cout << "P must be power of 2!";
+        cout << "P must be power of 2!\n";
         exit(1);
     }
     int dest_p;
@@ -203,7 +212,10 @@ int main(int argc, char **argv) {
     temp_recv = (float *) malloc(Nballs/2.0*7*__SIZEOF_FLOAT__);
     temp_send = (float *) malloc(Nballs*7*__SIZEOF_FLOAT__);
 
-    for(int n=0;n<Ntime;n++){ // loop through time
+    //vector<vector<vector<double>>> coordinates(Nballs, vector<vector<double>>(Ntime, vector<double>(2))); // init array holding storing values of coordinates
+    auto coordinates = new double[Nballs][Ntime][2]; // init array holding storing values of coordinates
+
+    for(int n=0;n<1;n++){ // loop through time
 
         /* Use parallel merge sort to sort and exchange balls with all processors.*/
         BallSorter::sort_balls(balls_local, I);
@@ -212,18 +224,18 @@ int main(int argc, char **argv) {
         temp_send = balls_to_array(balls_local, I);
         for(int i=0;i<height;i++){
             
-            dest_p = bitXor(p, pow(2,i));
+            dest_p = p ^ (int) pow(2,i);
             MPI_Sendrecv(temp_send, sending_sz*7, MPI_FLOAT, dest_p, tag, 
                         temp_recv, sending_sz*7, MPI_FLOAT, dest_p, tag, 
                         MPI_COMM_WORLD, &status);
             temp_send = merge(temp_recv, temp_send, sending_sz);
             //memcpy(temp_send, temp_merge, sending_sz*7*2*__SIZEOF_FLOAT__);
             sending_sz *= 2;
-            
         }
+
         balls_global = array_to_balls(temp_send, Nballs);
 
-         /* Use MPI_Allgather to exchange all balls with other processors */
+        /* Use MPI_Allgather to exchange all balls with other processors */
         // temp_balls_local = balls_to_array(balls_local, I);
         // temp_balls_global = (float *) malloc(Nballs * 7 * __SIZEOF_FLOAT__);
         // MPI_Allgather(temp_balls_local, (I)*7, MPI_FLOAT, temp_balls_global, (I)*7, MPI_FLOAT, MPI_COMM_WORLD);
@@ -231,8 +243,8 @@ int main(int argc, char **argv) {
         // balls_global = array_to_balls(temp_balls_global, Nballs);
         // BallSorter::sort_balls(balls_global, Nballs);
 
-        // free(temp_send);
-        // free(temp_recv);
+        free(temp_send);
+        //free(temp_recv);
 
         /* Save current position of ALL balls */
         if(p==0){
@@ -243,7 +255,7 @@ int main(int argc, char **argv) {
             }
         }
 
-        /* Split up balls */
+        // /* Split up balls */
         start_ind = p*L+min(p,R); // starting index for processor p
         left_ghost = 0;
         right_ghost = 0;
@@ -275,14 +287,18 @@ int main(int argc, char **argv) {
             balls_local[i].update(dt); 
         }        
 
-        //cout << n << endl;
+    //     //cout << n << endl;
     }
 
     double endtime = MPI_Wtime();
 
     if(p==0) cout << "Nballs: " << Nballs << " NProc: " << P << " Ntime: " << Ntime << " Time (s): " << endtime - starttime << endl;
 
-    if(p==0){write_to_file(coordinates, Nballs);}
+    if(p==0){
+        write_to_file(coordinates, Nballs); 
+        double meta[] = {BOUND_LEFT, BOUND_RIGHT, BOUND_BOT, BOUND_TOP, FPS}; 
+        write_meta(meta);
+    }
 
     MPI_Finalize();
 }

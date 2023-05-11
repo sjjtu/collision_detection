@@ -6,17 +6,19 @@ figure("Visible","off")
 wb = waitbar(0, 'Starting');
 
 load("out.txt")
+load("meta.txt")
 
 [Ntime, Nballs2] = size(out);
 Nballs = Nballs2 / 2;
 
-xmax = 100;
-xmin = 0;
+xmin = meta(1);
+xmax = meta(2);
+ymin = meta(3);
+ymax = meta(4);
+FPS = meta(5);
 
-ymax = 100;
-ymin = 0;
 F(Ntime) = struct('cdata',[],'colormap',[]);
-I = imread('sapce.jpg'); 
+I = imread('space.jpg'); 
 tic
 for n=1:Ntime
      
@@ -41,7 +43,7 @@ toc
 close(wb)
 
 vw = VideoWriter("balls");
-vw.FrameRate = 50;
+vw.FrameRate = FPS;
 vw.Quality = 100;
 open(vw);
 writeVideo(vw, F);
