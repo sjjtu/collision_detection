@@ -67,12 +67,12 @@ Ball * generate_balls(int num_balls, int p, int P, int L, int R, float bleft, fl
     vector<pair<float, float>> pos;
     Ball *balls = new Ball[num_balls];
     int c = 0;
-    int thres_l = 0;  // threshold for left and right boundary, only for first p
+    int thres_l = 0;  // threshold for top and bot boundary, only for first p
     if(p==0) thres_l = 2;
-    int thres_r = 0;  // threshold for left and right boundary, only for last p
+    int thres_r = 0;  // threshold for top and bot boundary, only for last p
     if(p==P-1) thres_r = 2;
-    for (float j = bbot+2; j < btop-2; j+=2.1) { // no balls at boundary and no touching balls
-        for (float i = bleft+thres_l; i < bright-thres_r; i+=2.1) { // no balls at boundary and no touching balls
+    for (float j = bbot+thres_l; j < btop-thres_r; j+=2.1) { // no balls at boundary and no touching balls
+        for (float i = bleft+2.1; i < bright-2.1; i+=2.1) { // no balls at boundary and no touching balls
             pos.push_back(make_pair(i+0.0, j+0.0));  
             c++; 
         }
@@ -181,11 +181,12 @@ int main(int argc, char **argv) {
     int R = Nballs % P;
     int I = (int) (Nballs+P-p-1)/P; //(number of local elements)
 
-    /* generate balls: divide x axis into P intervals; each processor generates balls in one interval */
-    float dx = ((float) BOUND_RIGHT - BOUND_LEFT) / P;
-    float bleft = p*dx;
-    float bright = bleft + dx;
-    Ball *balls_local = generate_balls(I, p, P, L, R, bleft, bright, BOUND_BOT, BOUND_TOP);
+    /* generate balls: divide y (!) axis into P intervals; each processor generates balls in one interval */
+    /* if we divide x axis into P intervals then we are already sorted globally after local sort */
+    float dy = ((float) BOUND_TOP - BOUND_BOT) / P;
+    float bbot = p*dy;
+    float btop = bbot + dy;
+    Ball *balls_local = generate_balls(I, p, P, L, R, BOUND_LEFT, BOUND_RIGHT, bbot, btop);
     // print_local_balls(p, balls_local, I, "local balls");
     // Ball *balls_local = (Ball *) malloc(sizeof(Ball));
     // if(p==0) balls_local[0] = {Ball(1,1,52,50,-1,0,1)};
@@ -201,7 +202,7 @@ int main(int argc, char **argv) {
     int right_ghost; // number of right boundary balls
 
     
-    int height = (int) log2(P); // make sure that P is power 2! //TODO: check that?
+    int height = (int) log2(P); // make sure that P is power 2!
     if(height != log2(P)) {
         cout << "P must be power of 2!\n";
         exit(1);
@@ -215,7 +216,7 @@ int main(int argc, char **argv) {
     //vector<vector<vector<double>>> coordinates(Nballs, vector<vector<double>>(Ntime, vector<double>(2))); // init array holding storing values of coordinates
     auto coordinates = new double[Nballs][Ntime][2]; // init array holding storing values of coordinates
 
-    for(int n=0;n<1;n++){ // loop through time
+    for(int n=0;n<Ntime;n++){ // loop through time
 
         /* Use parallel merge sort to sort and exchange balls with all processors.*/
         BallSorter::sort_balls(balls_local, I);
@@ -229,22 +230,12 @@ int main(int argc, char **argv) {
                         temp_recv, sending_sz*7, MPI_FLOAT, dest_p, tag, 
                         MPI_COMM_WORLD, &status);
             temp_send = merge(temp_recv, temp_send, sending_sz);
-            //memcpy(temp_send, temp_merge, sending_sz*7*2*__SIZEOF_FLOAT__);
             sending_sz *= 2;
         }
 
         balls_global = array_to_balls(temp_send, Nballs);
 
-        /* Use MPI_Allgather to exchange all balls with other processors */
-        // temp_balls_local = balls_to_array(balls_local, I);
-        // temp_balls_global = (float *) malloc(Nballs * 7 * __SIZEOF_FLOAT__);
-        // MPI_Allgather(temp_balls_local, (I)*7, MPI_FLOAT, temp_balls_global, (I)*7, MPI_FLOAT, MPI_COMM_WORLD);
-
-        // balls_global = array_to_balls(temp_balls_global, Nballs);
-        // BallSorter::sort_balls(balls_global, Nballs);
-
         free(temp_send);
-        //free(temp_recv);
 
         /* Save current position of ALL balls */
         if(p==0){
@@ -254,8 +245,8 @@ int main(int argc, char **argv) {
                 coordinates[global_ball_ind][n][1] = balls_global[i].position_y;
             }
         }
-
-        // /* Split up balls */
+        
+        /* Split up balls */
         start_ind = p*L+min(p,R); // starting index for processor p
         left_ghost = 0;
         right_ghost = 0;

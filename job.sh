@@ -11,8 +11,8 @@
 #SBATCH --mail-type=BEGIN,END
 # 10 minutes wall-clock time will be given to this job
 #SBATCH -t 00:10:00
-# Number of nodes
-#SBATCH --nodes=1
+# Number of nodes, maximum number
+#SBATCH --nodes=16
 # Number of tasks per core (prevent hyperthreading)
 #SBATCH --ntasks-per-core=1
 #SBATCH --cpus-per-task=1
@@ -22,19 +22,16 @@
 # compile
 make CC=CC
 
-srun --ntasks-per-node 1 ./a.out $1
-make clean
+srun --nodes 1 ./a.out $1
 
-srun --ntasks-per-node 2 ./a.out $1
-make clean
+srun --nodes 2 ./a.out $1
 
-srun --ntasks-per-node 4 ./a.out $1
-make clean
+srun --nodes 4 ./a.out $1
 
-srun --ntasks-per-node 8 ./a.out $1
-make clean
+srun --nodes 8 ./a.out $1
 
-srun --ntasks-per-node 16 ./a.out $1
+srun --nodes 16 ./a.out $1
+
 make clean
 
 wait
