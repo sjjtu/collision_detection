@@ -11,15 +11,15 @@
 #include "Detector.h"
 #include "BallSorter.h"
 
-const int T = 30;
-const int FPS = 50;
+const int T = 10;
+const int FPS = 25;
 const double dt = 1.0/FPS;
 constexpr int Ntime = T*FPS;
 const int BOUND_LEFT = 0;
 const int BOUND_RIGHT = 500;
 const int BOUND_TOP = 500;
 const int BOUND_BOT = 0;
-const int MAX_VEL = 5;
+const int MAX_VEL = 50;
 const double TOL = 1E-2;
 
 void write_meta(double meta[5]){
@@ -217,7 +217,7 @@ int main(int argc, char **argv) {
     //vector<vector<vector<double>>> coordinates(Nballs, vector<vector<double>>(Ntime, vector<double>(2))); // init array holding storing values of coordinates
     auto coordinates = new double[Nballs][Ntime][2]; // init array holding storing values of coordinates
 
-    for(int n=0;n<5;n++){ // loop through time
+    for(int n=0;n<Ntime;n++){ // loop through time
 
         /* Use parallel merge sort to sort and exchange balls with all processors.*/
         BallSorter::sort_balls(balls_local, I);
@@ -280,7 +280,7 @@ int main(int argc, char **argv) {
             balls_local[i].update(dt); 
         }        
 
-    //     //cout << n << endl;
+        //cout << n << endl;
     }
 
     double endtime = MPI_Wtime();
