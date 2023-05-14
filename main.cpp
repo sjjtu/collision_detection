@@ -5,6 +5,7 @@
 #include <random>
 #include <algorithm>
 #include <mpi.h>
+#include <string>
 
 #include "ball.h"
 #include "Detector.h"
@@ -216,7 +217,7 @@ int main(int argc, char **argv) {
     //vector<vector<vector<double>>> coordinates(Nballs, vector<vector<double>>(Ntime, vector<double>(2))); // init array holding storing values of coordinates
     auto coordinates = new double[Nballs][Ntime][2]; // init array holding storing values of coordinates
 
-    for(int n=0;n<Ntime;n++){ // loop through time
+    for(int n=0;n<5;n++){ // loop through time
 
         /* Use parallel merge sort to sort and exchange balls with all processors.*/
         BallSorter::sort_balls(balls_local, I);
@@ -265,6 +266,7 @@ int main(int argc, char **argv) {
         
         //cout << "left ghost balls: " << left_ghost << " right ghost balls: " << right_ghost << " local: " << I << endl;
         /*Local Collision detection including boundary balls*/
+        //print_local_balls_id(p, balls_local, (I+left_ghost+right_ghost), to_string(n));
         Detector det(balls_local, (I+left_ghost+right_ghost), Nballs);
         //cout << "time step " << n << "\n";
         det.sweep_and_prune();
