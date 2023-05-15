@@ -189,9 +189,9 @@ int main(int argc, char **argv) {
     float btop = bbot + dy;
     Ball *balls_local = generate_balls(I, p, P, L, R, BOUND_LEFT, BOUND_RIGHT, bbot, btop);
     // print_local_balls(p, balls_local, I, "local balls");
-    // Ball *balls_local = (Ball *) malloc(sizeof(Ball));
-    // if(p==0) balls_local[0] = {Ball(1,1,52,50,-1,0,1)};
-    // if(p==1) balls_local[0] = {Ball(1,1,48, 50, 1, 0, 0)};
+    //Ball *balls_local = (Ball *) malloc(sizeof(Ball));
+    //if(p==0) balls_local[0] = {Ball(1,1,52,50,-1,0,1)};
+    //if(p==1) balls_local[0] = {Ball(1,1,48, 50, 1, 0, 0)};
 
     double starttime = MPI_Wtime();
 
@@ -252,19 +252,19 @@ int main(int argc, char **argv) {
         left_ghost = 0;
         right_ghost = 0;
         // include all balls right to the boundary that might collide with local balls
-        while(p<P-1 && right_ghost <= I && balls_global[start_ind+I-1].position_x+balls_global[start_ind+I-1].radius >= balls_global[start_ind+I+right_ghost].position_x-balls_global[start_ind+I+right_ghost].radius - TOL){
+        while(p<P-1 && right_ghost < I && balls_global[start_ind+I-1].position_x+balls_global[start_ind+I-1].radius >= balls_global[start_ind+I+right_ghost].position_x-balls_global[start_ind+I+right_ghost].radius - TOL){
             right_ghost++;
             //cout << "time " << n << " adding ball to porcessor " << p<< endl;
         }
         // same with left boundary
-        while(0<p && left_ghost <= I && balls_global[start_ind].position_x-balls_global[start_ind].radius <= balls_global[start_ind-left_ghost-1].position_x+balls_global[start_ind-left_ghost-1].radius +TOL){
+        while(0<p && left_ghost < I && balls_global[start_ind].position_x-balls_global[start_ind].radius <= balls_global[start_ind-left_ghost-1].position_x+balls_global[start_ind-left_ghost-1].radius +TOL){
             left_ghost++;
             //cout << "time " << n << " adding ball to porcessor " << p<< endl;
         }
         balls_local = (Ball *) malloc((I+left_ghost+right_ghost)*sizeof(Ball));
         memcpy(balls_local, balls_global+start_ind-left_ghost, (I+left_ghost+right_ghost)*sizeof(Ball));
         
-        //cout << "left ghost balls: " << left_ghost << " right ghost balls: " << right_ghost << " local: " << I << endl;
+        cout << "left ghost balls: " << left_ghost << " right ghost balls: " << right_ghost << " local: " << I << endl;
         /*Local Collision detection including boundary balls*/
         //print_local_balls_id(p, balls_local, (I+left_ghost+right_ghost), to_string(n));
         Detector det(balls_local, (I+left_ghost+right_ghost), Nballs);
