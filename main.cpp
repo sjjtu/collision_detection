@@ -264,7 +264,7 @@ int main(int argc, char **argv) {
         balls_local = (Ball *) malloc((I+left_ghost+right_ghost)*sizeof(Ball));
         memcpy(balls_local, balls_global+start_ind-left_ghost, (I+left_ghost+right_ghost)*sizeof(Ball));
         
-        cout << "left ghost balls: " << left_ghost << " right ghost balls: " << right_ghost << " local: " << I << endl;
+        //cout << "left ghost balls: " << left_ghost << " right ghost balls: " << right_ghost << " local: " << I << endl;
         /*Local Collision detection including boundary balls*/
         //print_local_balls_id(p, balls_local, (I+left_ghost+right_ghost), to_string(n));
         Detector det(balls_local, (I+left_ghost+right_ghost), Nballs);
